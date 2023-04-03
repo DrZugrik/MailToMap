@@ -1,5 +1,6 @@
 ### Add libraries
 
+import os
 import csv
 import imbox
 import traceback
@@ -38,7 +39,7 @@ try:
 
     with open(filename_csv, 'w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file, delimiter=',')
-        writer.writerow(['Head', 'From', 'Data', 'Body', 'Num', 'Price', 'Adress', 'Cadastr'])
+        writer.writerow(['UID', 'Head', 'From', 'Data', 'Body', 'Num', 'Price', 'Adress', 'Cadastr'])
         for uid, message in messages:
             pattern_num = r'\b\w\d{1,4}\b|\b\d{2,6}\b'
             num = re.findall(pattern_num, message.subject)
@@ -52,7 +53,7 @@ try:
             cadastr_num = r'\d{2,3}:\d{2,3}:\d{6}:\d{2,3}'
             cadastr = re.findall(cadastr_num, message.body['plain'][0])
 
-            writer.writerow([message.subject, message.sent_from, message.date, message.body['plain'][0], num, 'price', 'address', cadastr])
+            writer.writerow([uid, message.subject, message.sent_from, message.date, message.body['plain'][0], num, 'price', 'address', cadastr])
 
             print(f'Записано письмо {m} из {len(messages)}')
             m+=1
