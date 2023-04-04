@@ -3,6 +3,7 @@ import imbox
 import traceback
 import re
 import pandas as pd
+import os
 
 with open('mail_settings.txt', 'r') as file:
     content = file.read()
@@ -21,7 +22,6 @@ imbox_instance = imbox.Imbox('imap.gmail.com',
                              password=passwrd,
                              ssl=True,
                              ssl_context=None)
-
 m = 1  # счетчик обработанных писем
 
 try:
@@ -56,23 +56,19 @@ try:
             body = message.body['plain'][0]
             cleaned_body = "\n".join([line.strip() for line in body.split("\n") if line.strip()])
 
-            pattern_address = r'(?:(?P<region>[А-ЯЁ][а-яё]+(?:\s+область|\s+край|\s+республика))\s*,\s*)?(?:(?P<city>[А-ЯЁ][а-яё]+(?:\s+город|\s+поселок|\s+деревня|\s+станция))\s*,\s*)?(?:(?P<street>(?:ул\.|улица|пер\.|переулок|пр\.|проспект|бульвар)\s*\w+)\s*,\s*)?(?P<building>\w+\s*\d+(?:\s*к(?:орпус)?\.?\s*\d+)?(?:\s*стр\.?\s*\d+)?(?:\s*кв\.?\s*\d+)?(?:\s*,?\s*(?P<postcode>\d{6}))?)'
-            address = re.findall(pattern_address, cleaned_body)
-
-            pattern_price = r'(?:прими\s+)?(?:в\s+)?работу\s+(?P<cost>\d{4,6})\s*(?:руб(?:лей)?|рэ|р|p.|т|т.)'
-            price = re.findall(pattern_price, cleaned_body)
-
             cadastr_num = r'\d{2,3}:\d{2,3}:\d{6}:\d{2,3}'
             cadastr = re.findall(cadastr_num, cleaned_body)
 
-            writer.writerow([uid, message.subject, message.sent_from, message.date, cleaned_body, num, price, address, cadastr])
+            writer.writerow([uid, message.subject, message.sent_from, message.date, cleaned_body, num, 'coast', 'adress', cadastr])
 
             print(f'В почтовом ящике содержится {len(messages)} писем. В файле уже есть {num_rows + m} записей. Записано письмо {m} из {len(messages) - num_rows - m} оставшихся.')
             m+=1
 
+            if (num_rows + m) >= len(messages) or len(df[df['UID'] == uid]) > 0:
+                break
+
 except Exception as e:
     print(traceback.format_exc())
 
-#filename.close()    # Закрываем файл csv
 imbox_instance.logout()     # Закрываем обращение к почтовому ящику
 
