@@ -67,7 +67,7 @@ try:
 
             writer.writerow([uid, message.subject, message.sent_from, message.date, cleaned_body, num, price, address, cadastr])
 
-            print(f'В почтовом ящике содержится {len(messages)} писем. В файле есть {num_rows + m} записей. Записано письмо {m} из {len(messages) - num_rows - m} оставшихся.')
+            print(f'В почтовом ящике содержится {len(messages)} писем. В файле уже есть {num_rows + m} записей. Записано письмо {m} из {len(messages) - num_rows - m} оставшихся.')
             m+=1
 
 except Exception as e:
