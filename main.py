@@ -43,16 +43,19 @@ try:
             pattern_num = r'\b\w\d{1,4}\b|\b\d{2,6}\b'
             num = re.findall(pattern_num, message.subject)
 
-            #pattern_address = r'(?:(?P<region>[А-ЯЁ][а-яё]+(?:\s+область|\s+край|\s+республика))\s*,\s*)?(?:(?P<city>[А-ЯЁ][а-яё]+(?:\s+город|\s+поселок|\s+деревня|\s+станция))\s*,\s*)?(?:(?P<street>(?:ул\.|улица|пер\.|переулок|пр\.|проспект|бульвар)\s*\w+)\s*,\s*)?(?P<building>\w+\s*\d+(?:\s*к(?:орпус)?\.?\s*\d+)?(?:\s*стр\.?\s*\d+)?(?:\s*кв\.?\s*\d+)?(?:\s*,?\s*(?P<postcode>\d{6}))?)'
-            #address = re.findall(pattern_address, message.body['plain'][0])
+            body = message.body['plain'][0]
+            cleaned_body = "\n".join([line.strip() for line in body.split("\n") if line.strip()])
 
-            #pattern_price = r'(?:прими\s+)?(?:в\s+)?работу\s+(?P<cost>\d{4,6})\s*(?:руб(?:лей)?|рэ|р|p.|т|т.)'
-            #price = re.findall(pattern_price, message.body['plain'][0])
+            # pattern_address = r'(?:(?P<region>[А-ЯЁ][а-яё]+(?:\s+область|\s+край|\s+республика))\s*,\s*)?(?:(?P<city>[А-ЯЁ][а-яё]+(?:\s+город|\s+поселок|\s+деревня|\s+станция))\s*,\s*)?(?:(?P<street>(?:ул\.|улица|пер\.|переулок|пр\.|проспект|бульвар)\s*\w+)\s*,\s*)?(?P<building>\w+\s*\d+(?:\s*к(?:орпус)?\.?\s*\d+)?(?:\s*стр\.?\s*\d+)?(?:\s*кв\.?\s*\d+)?(?:\s*,?\s*(?P<postcode>\d{6}))?)'
+            # address = re.findall(pattern_address, message.body['plain'][0])
+
+            # pattern_price = r'(?:прими\s+)?(?:в\s+)?работу\s+(?P<cost>\d{4,6})\s*(?:руб(?:лей)?|рэ|р|p.|т|т.)'
+            # price = re.findall(pattern_price, message.body['plain'][0])
 
             cadastr_num = r'\d{2,3}:\d{2,3}:\d{6}:\d{2,3}'
-            cadastr = re.findall(cadastr_num, message.body['plain'][0])
+            cadastr = re.findall(cadastr_num, cleaned_body)
 
-            writer.writerow([message.subject, message.sent_from, message.date, message.body['plain'][0], num, 'price', 'address', cadastr])
+            writer.writerow([message.subject, message.sent_from, message.date, cleaned_body, num, 'price', 'address', cadastr])
 
             print(f'Записано письмо {m} из {len(messages)}')
             m+=1
