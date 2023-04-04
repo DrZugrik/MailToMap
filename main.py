@@ -1,11 +1,8 @@
-### Add libraries
-
 import csv
 import imbox
 import traceback
 import re
-
-###
+import pandas as pd
 
 with open('mail_settings.txt', 'r') as file:
     content = file.read()
@@ -15,7 +12,7 @@ with open('mail_settings.txt', 'r') as file:
     mail_from = content.split('mail_from=')[1].split('\n')[0]
 
 # Имя файла, куда будут сохраняться данные
-filename_csv = filename+'.csv'
+filename_csv = filename + '.csv'
 
 # Загрузка данных почтового ящика из файла
 # Указываем данные для подключения к почтовому ящику
@@ -25,7 +22,7 @@ imbox_instance = imbox.Imbox('imap.gmail.com',
                              ssl=True,
                              ssl_context=None)
 
-m = 1 # счетчик обработанных писем
+m = 1  # счетчик обработанных писем
 
 try:
     # Формирование запроса
@@ -36,44 +33,46 @@ try:
     # Получение списка писем
     messages = imbox_instance.messages(folder='INBOX', **query)
 
-    with open(filename_csv, 'w', newline='', encoding='utf-8') as file:
+    # Открываем файл csv на чтение и добавление
+    with open(filename_csv, 'a+', newline='', encoding='utf-8') as file:
         writer = csv.writer(file, delimiter=',')
-        writer.writerow(['Head', 'From', 'Data', 'Body', 'Num', 'Price', 'Adress', 'Cadastr'])
+
+        # Если файл пустой, записываем заголовок
+        if file.tell() == 0:
+            writer.writerow(['UID', 'Head', 'From', 'Data', 'Body', 'Num', 'Price', 'Adress', 'Cadastr'])
+
+        # Читаем CSV файл в DataFrame
+        df = pd.read_csv(filename_csv)
+        num_rows = df.shape[0]
+        # Обходим все письма
         for uid, message in messages:
+            # Проверяем, был ли уже сохранен UID этого письма в CSV файле
+            if uid in df['UID'].values:
+                continue  # Если да, то переходим к следующему письму
+
             pattern_num = r'\b\w\d{1,4}\b|\b\d{2,6}\b'
             num = re.findall(pattern_num, message.subject)
 
             body = message.body['plain'][0]
             cleaned_body = "\n".join([line.strip() for line in body.split("\n") if line.strip()])
 
-            # pattern_address = r'(?:(?P<region>[А-ЯЁ][а-яё]+(?:\s+область|\s+край|\s+республика))\s*,\s*)?(?:(?P<city>[А-ЯЁ][а-яё]+(?:\s+город|\s+поселок|\s+деревня|\s+станция))\s*,\s*)?(?:(?P<street>(?:ул\.|улица|пер\.|переулок|пр\.|проспект|бульвар)\s*\w+)\s*,\s*)?(?P<building>\w+\s*\d+(?:\s*к(?:орпус)?\.?\s*\d+)?(?:\s*стр\.?\s*\d+)?(?:\s*кв\.?\s*\d+)?(?:\s*,?\s*(?P<postcode>\d{6}))?)'
-            # address = re.findall(pattern_address, message.body['plain'][0])
+            pattern_address = r'(?:(?P<region>[А-ЯЁ][а-яё]+(?:\s+область|\s+край|\s+республика))\s*,\s*)?(?:(?P<city>[А-ЯЁ][а-яё]+(?:\s+город|\s+поселок|\s+деревня|\s+станция))\s*,\s*)?(?:(?P<street>(?:ул\.|улица|пер\.|переулок|пр\.|проспект|бульвар)\s*\w+)\s*,\s*)?(?P<building>\w+\s*\d+(?:\s*к(?:орпус)?\.?\s*\d+)?(?:\s*стр\.?\s*\d+)?(?:\s*кв\.?\s*\d+)?(?:\s*,?\s*(?P<postcode>\d{6}))?)'
+            address = re.findall(pattern_address, cleaned_body)
 
-            # pattern_price = r'(?:прими\s+)?(?:в\s+)?работу\s+(?P<cost>\d{4,6})\s*(?:руб(?:лей)?|рэ|р|p.|т|т.)'
-            # price = re.findall(pattern_price, message.body['plain'][0])
+            pattern_price = r'(?:прими\s+)?(?:в\s+)?работу\s+(?P<cost>\d{4,6})\s*(?:руб(?:лей)?|рэ|р|p.|т|т.)'
+            price = re.findall(pattern_price, cleaned_body)
 
             cadastr_num = r'\d{2,3}:\d{2,3}:\d{6}:\d{2,3}'
             cadastr = re.findall(cadastr_num, cleaned_body)
 
-            writer.writerow([message.subject, message.sent_from, message.date, cleaned_body, num, 'price', 'address', cadastr])
+            writer.writerow([uid, message.subject, message.sent_from, message.date, cleaned_body, num, price, address, cadastr])
 
-            print(f'Записано письмо {m} из {len(messages)}')
+            print(f'В почтовом ящике содержится {len(messages)} писем. В файле есть {num_rows + m} записей. Записано письмо {m} из {len(messages) - num_rows - m} оставшихся.')
             m+=1
 
 except Exception as e:
     print(traceback.format_exc())
 
-
-'''
-text = "Напишите мне на example@mail.ru или позвоните по телефону +7 (123) 456-78-90"
-email_pattern = r'\b[\w.-]+@[a-zA-Z_-]+?\.[a-zA-Z]{2,3}\b'
-phone_pattern = r'\+?\d[\d()-]{8,}\d'
-
-text_without_emails = re.sub(email_pattern, '', text)
-text_without_contacts = re.sub(phone_pattern, '', text_without_emails)
-'''
-
 #filename.close()    # Закрываем файл csv
 imbox_instance.logout()     # Закрываем обращение к почтовому ящику
-
 
