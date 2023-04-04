@@ -55,6 +55,8 @@ try:
 
             body = message.body['plain'][0]
             cleaned_body = "\n".join([line.strip() for line in body.split("\n") if line.strip()])
+            # вставить регулярное выражение начиная с С уважением и до конца всего текста
+            cleaned_body =  re.X.sub(r'\с уважением.+?','',cleaned_body)
 
             cadastr_num = r'\d{2,3}:\d{2,3}:\d{6}:\d{2,3}'
             cadastr = re.findall(cadastr_num, cleaned_body)
