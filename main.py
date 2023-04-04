@@ -38,7 +38,7 @@ try:
 
     with open(filename_csv, 'w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file, delimiter=',')
-        writer.writerow(['Head', 'From', 'Data', 'Body', 'Num', 'Price', 'Adress', 'Cadastr'])
+        writer.writerow(['UID', 'Head', 'From', 'Data', 'Body', 'Num', 'Price', 'Adress', 'Cadastr'])
         for uid, message in messages:
             pattern_num = r'\b\w\d{1,4}\b|\b\d{2,6}\b'
             num = re.findall(pattern_num, message.subject)
@@ -49,10 +49,13 @@ try:
             #pattern_price = r'(?:прими\s+)?(?:в\s+)?работу\s+(?P<cost>\d{4,6})\s*(?:руб(?:лей)?|рэ|р|p.|т|т.)'
             #price = re.findall(pattern_price, message.body['plain'][0])
 
-            cadastr_num = r'\d{2,3}:\d{2,3}:\d{6}:\d{2,3}'
-            cadastr = re.findall(cadastr_num, message.body['plain'][0])
+            body = message.body['plain'][0]
+            cleaned_body = "\n".join([line.strip() for line in body.split("\n") if line.strip()])
 
-            writer.writerow([message.subject, message.sent_from, message.date, message.body['plain'][0], num, 'price', 'address', cadastr])
+            cadastr_num = r'\d{2,3}:\d{2,3}:\d{6}:\d{2,3}'
+            cadastr = re.findall(cadastr_num, cleaned_body)
+
+            writer.writerow([uid, message.subject, message.sent_from, message.date, cleaned_body, num, 'price', 'address', cadastr])
 
             print(f'Записано письмо {m} из {len(messages)}')
             m+=1
