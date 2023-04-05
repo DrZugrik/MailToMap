@@ -11,6 +11,7 @@ with open('mail_settings.txt', 'r') as file:
     passwrd = content.split('pass=')[1].split('\n')[0]
     filename = content.split('filename=')[1].split('\n')[0]
     mail_from = content.split('mail_from=')[1].split('\n')[0]
+    file.close()
 
 # Имя файла, куда будут сохраняться данные
 filename_csv = filename + '.csv'
@@ -34,7 +35,7 @@ try:
     messages = imbox_instance.messages(folder='INBOX', **query)
 
 
-    # Открываем файл csv на чтение и добавление
+    # Открываем файл csv на чтение и добавление строк, указываем правильную кодировку
     with open(filename_csv, 'a+', newline='', encoding='utf-8-sig') as file:
         writer = csv.writer(file, delimiter=',')
 
