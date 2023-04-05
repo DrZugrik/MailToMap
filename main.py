@@ -35,7 +35,7 @@ try:
 
 
     # Открываем файл csv на чтение и добавление
-    with open(filename_csv, 'a+', newline='', encoding='utf-8') as file:
+    with open(filename_csv, 'a+', newline='', encoding='utf-8-sig') as file:
         writer = csv.writer(file, delimiter=',')
 
         # Если файл пустой, записываем заголовок
@@ -55,23 +55,22 @@ try:
             num = re.findall(pattern_num, message.subject)
 
             body = message.body['plain'][0]
-            cleaned_body = "\n".join([line.strip() for line in body.split("\n") if line.strip()])
+            cleaned_body = "\n".join([line.strip() for line in body.split("\n") if line.strip()])   # убираем пустые строки
 
-            # вставить регулярное выражение начиная с С уважением и до конца всего текста
             cleaned_body = re.sub(r"с уважением.*$", "", cleaned_body, flags=re.DOTALL | re.IGNORECASE)
 
             pattern_body_short = r'^(From:|To:|Sent:|Cc:|Subject:|[>|Тел\.|E-mail:|Моб\.]).*$'
             body_short = re.sub(pattern_body_short, '', cleaned_body, flags=re.MULTILINE)
 
-            body_short = "\n".join([line.strip() for line in body_short.split("\n") if line.strip()])
+            body_short = "\n".join([line.strip() for line in body_short.split("\n") if line.strip()])   # убираем пустые строки
 
             #pattern_address = r'(?:(?P<region>[А-ЯЁ][а-яё]+(?:\s+область|\s+край|\s+республика))\s*,\s*)?(?:(?P<city>[А-ЯЁ][а-яё]+(?:\s+город|\s+поселок|\s+деревня|\s+станция))\s*,\s*)?(?:(?P<street>(?:ул\.|улица|пер\.|переулок|пр\.|проспект|бульвар)\s*\w+)\s*,\s*)?(?P<building>\w+\s*\d+(?:\s*к(?:орпус)?\.?\s*\d+)?(?:\s*стр\.?\s*\d+)?(?:\s*кв\.?\s*\d+)?(?:\s*,?\s*(?P<postcode>\d{6}))?)'
             #adress = re.findall(pattern_address, body_short)
 
-
-
-            cadastr_num = r'\d{2,3}:\d{2,3}:\d{6}:\d{2,3}'
+            cadastr_num = r'\d{2,3}[ :]\d{2,3}[ :]\d{6,7}[ :]\d{2,3}'
             cadastr = re.findall(cadastr_num, cleaned_body)
+            cadastr = [cad.replace(" ", ":") for cad in cadastr]
+
 
             writer.writerow([uid, message.subject, message.sent_from, message.date, cleaned_body, body_short, num, 'coast', 'adress', cadastr])
 
@@ -85,4 +84,3 @@ except Exception as e:
     print(traceback.format_exc())
 
 imbox_instance.logout()     # Закрываем обращение к почтовому ящику
-
