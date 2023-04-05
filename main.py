@@ -33,13 +33,14 @@ try:
     # Получение списка писем
     messages = imbox_instance.messages(folder='INBOX', **query)
 
+
     # Открываем файл csv на чтение и добавление
     with open(filename_csv, 'a+', newline='', encoding='utf-8') as file:
         writer = csv.writer(file, delimiter=',')
 
         # Если файл пустой, записываем заголовок
         if file.tell() == 0:
-            writer.writerow(['UID', 'Head', 'From', 'Data', 'Body', 'Num', 'Price', 'Adress', 'Cadastr'])
+            writer.writerow(['UID', 'Head', 'From', 'Data', 'Body', 'Body_short', 'Num', 'Price', 'Adress', 'Cadastr'])
 
         # Читаем CSV файл в DataFrame
         df = pd.read_csv(filename_csv)
@@ -55,13 +56,24 @@ try:
 
             body = message.body['plain'][0]
             cleaned_body = "\n".join([line.strip() for line in body.split("\n") if line.strip()])
+
             # вставить регулярное выражение начиная с С уважением и до конца всего текста
-            cleaned_body =  re.X.sub(r'\с уважением.+?','',cleaned_body)
+            cleaned_body = re.sub(r"с уважением.*$", "", cleaned_body, flags=re.DOTALL | re.IGNORECASE)
+
+            pattern_body_short = r'^(From:|To:|Sent:|Cc:|Subject:|[>|Тел\.|E-mail:|Моб\.]).*$'
+            body_short = re.sub(pattern_body_short, '', cleaned_body, flags=re.MULTILINE)
+
+            body_short = "\n".join([line.strip() for line in body_short.split("\n") if line.strip()])
+
+            #pattern_address = r'(?:(?P<region>[А-ЯЁ][а-яё]+(?:\s+область|\s+край|\s+республика))\s*,\s*)?(?:(?P<city>[А-ЯЁ][а-яё]+(?:\s+город|\s+поселок|\s+деревня|\s+станция))\s*,\s*)?(?:(?P<street>(?:ул\.|улица|пер\.|переулок|пр\.|проспект|бульвар)\s*\w+)\s*,\s*)?(?P<building>\w+\s*\d+(?:\s*к(?:орпус)?\.?\s*\d+)?(?:\s*стр\.?\s*\d+)?(?:\s*кв\.?\s*\d+)?(?:\s*,?\s*(?P<postcode>\d{6}))?)'
+            #adress = re.findall(pattern_address, body_short)
+
+
 
             cadastr_num = r'\d{2,3}:\d{2,3}:\d{6}:\d{2,3}'
             cadastr = re.findall(cadastr_num, cleaned_body)
 
-            writer.writerow([uid, message.subject, message.sent_from, message.date, cleaned_body, num, 'coast', 'adress', cadastr])
+            writer.writerow([uid, message.subject, message.sent_from, message.date, cleaned_body, body_short, num, 'coast', 'adress', cadastr])
 
             print(f'В почтовом ящике содержится {len(messages)} писем. В файле уже есть {num_rows + m} записей. Записано письмо {m} из {len(messages) - num_rows - m} оставшихся.')
             m+=1
